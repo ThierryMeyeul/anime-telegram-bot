@@ -1,16 +1,31 @@
-# This is a sample Python script.
+import logging
+import asyncio
 
-# Press Ctrl+F5 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
+from telegram.ext import Application, ContextTypes
+
+from config import TOKEN
+from jobs.scheduler import scheduler, start_scheduler
+
+logging.basicConfig(level=logging.INFO)
+logger =logging.getLogger(__name__)
 
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press F9 to toggle the breakpoint.
+async def _post_init(app: Application) -> None:
+    try:
+        loop = asyncio.get_running_loop()
+
+        start_scheduler(app.bot, loop)
+        logger.info("Scheduler démarré avec succès")
+    except Exception as e:
+        logger.warning(f"[Main] Failed to start scheduler: {e}")
 
 
-# Press the green button in the gutter to run the script.
+def main() -> None:
+    app = Application.builder().token(TOKEN).post_init(_post_init).build()
+
+    print("Bot démarré... Appuie sur CTRL+C pour arrêter.")
+    app.run_polling()
+
+
 if __name__ == '__main__':
-    print_hi('PyCharm')
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+    main()
