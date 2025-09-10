@@ -6,9 +6,18 @@ from telegram.ext import Application, ContextTypes
 from config import TOKEN
 from jobs.scheduler import scheduler, start_scheduler
 
-logging.basicConfig(level=logging.INFO)
-logger =logging.getLogger(__name__)
 
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("httpcore").setLevel(logging.WARNING)
+
+# Configuration du logger principal
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+
+# Créer le logger global
+logger = logging.getLogger(__name__)
 
 async def _post_init(app: Application) -> None:
     try:
