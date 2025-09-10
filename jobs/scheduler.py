@@ -25,9 +25,9 @@ def start_scheduler(bot, loop):
 
     scheduler.add_job(
         job_wrapper,
-        CronTrigger(second=0),
-        # id='quote_every_6h',
-        # replace_existing=True
+        CronTrigger(hour='*/6', minute=0, second=0),
+        id='quote_every_6h',
+        replace_existing=True
     )
 
     if not scheduler.running:
