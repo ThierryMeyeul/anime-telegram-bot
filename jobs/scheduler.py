@@ -7,7 +7,7 @@ from telegram.ext import ContextTypes
 from telegram import Bot
 
 from config import CHANNEL_ID
-from services.anime_service import get_random_quote, get_weekly_schedule, get_waifu_random
+from services.anime_service import get_random_quote, get_weekly_schedule, get_waifu_random, get_anime_random
 
 scheduler = AsyncIOScheduler()
 
@@ -39,6 +39,11 @@ async def post_waifu_schedule(bot: Bot):
     await bot.send_photo(chat_id=CHANNEL_ID, photo=image_url, caption=caption, parse_mode=ParseMode.HTML)
 
 
+async def post_anime_details(bot: Bot):
+    image_url, result = get_anime_random()
+    await bot.send_photo(chat_id=CHANNEL_ID, photo=image_url, caption=result, parse_mode=ParseMode.MARKDOWN)
+
+
 def start_scheduler(bot, loop):
     # --- Citation à 00h et 12h ---
     def quote_wrapper():
@@ -62,7 +67,6 @@ def start_scheduler(bot, loop):
         replace_existing=True
     )
 
-    # --- Waifu à 06h et 18h ---
     def waifu_wrapper():
         asyncio.run_coroutine_threadsafe(post_waifu_schedule(bot), loop)
 
@@ -73,6 +77,15 @@ def start_scheduler(bot, loop):
         replace_existing=True
     )
 
-    # Démarrer le scheduler si pas déjà lancé
+    def anime_details_wrapper():
+        asyncio.run_coroutine_threadsafe(post_anime_details(bot), loop)
+
+    scheduler.add_job(
+        anime_details_wrapper,
+        CronTrigger(hour=20, minute=0, second=0),
+        id='anime_details',
+        replace_existing=True
+    )
+
     if not scheduler.running:
         scheduler.start()
