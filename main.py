@@ -1,9 +1,10 @@
 import logging
 import asyncio
 
-from telegram.ext import Application, ContextTypes
+from telegram.ext import Application, ContextTypes, CommandHandler
 
 from config import TOKEN
+from handlers.tagall_members import tag_all_members
 from jobs.scheduler import scheduler, start_scheduler
 
 
@@ -31,6 +32,8 @@ async def _post_init(app: Application) -> None:
 
 def main() -> None:
     app = Application.builder().token(TOKEN).post_init(_post_init).build()
+
+    app.add_handler(CommandHandler('tag_administrators', tag_all_members))
 
     print("Bot démarré... Appuie sur CTRL+C pour arrêter.")
     app.run_polling()

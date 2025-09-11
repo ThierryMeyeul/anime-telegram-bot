@@ -7,7 +7,7 @@ from telegram.ext import ContextTypes
 from telegram import Bot
 
 from config import CHANNEL_ID
-from services.anime_service import get_random_quote, get_weekly_schedule
+from services.anime_service import get_random_quote, get_weekly_schedule, get_waifu_random
 
 scheduler = AsyncIOScheduler()
 
@@ -34,18 +34,24 @@ async def post_weekly_schedule(bot: Bot):
     await bot.send_message(chat_id=CHANNEL_ID, text=message, parse_mode=ParseMode.HTML)
 
 
+async def post_waifu_schedule(bot: Bot):
+    image_url, caption = get_waifu_random()
+    await bot.send_photo(chat_id=CHANNEL_ID, photo=image_url, caption=caption, parse_mode=ParseMode.HTML)
+
+
 def start_scheduler(bot, loop):
-    def job_wrapper():
-        # Exécute la coroutine dans la boucle existante
+    # --- Citation à 00h et 12h ---
+    def quote_wrapper():
         asyncio.run_coroutine_threadsafe(post_quote(bot), loop)
 
     scheduler.add_job(
-        job_wrapper,
-        CronTrigger(hour='*/6', minute=0, second=0),
-        id='quote_every_6h',
+        quote_wrapper,
+        CronTrigger(hour='0,12', minute=0, second=0),
+        id='quote_daily',
         replace_existing=True
     )
 
+    # --- Planning hebdo des animés le dimanche à 20h ---
     def anime_weekly_wrapper():
         asyncio.run_coroutine_threadsafe(post_weekly_schedule(bot), loop)
 
@@ -56,6 +62,17 @@ def start_scheduler(bot, loop):
         replace_existing=True
     )
 
+    # --- Waifu à 06h et 18h ---
+    def waifu_wrapper():
+        asyncio.run_coroutine_threadsafe(post_waifu_schedule(bot), loop)
 
+    scheduler.add_job(
+        waifu_wrapper,
+        CronTrigger(hour='6,18', minute=0, second=0),
+        id='waifu_daily',
+        replace_existing=True
+    )
+
+    # Démarrer le scheduler si pas déjà lancé
     if not scheduler.running:
         scheduler.start()
